@@ -15,3 +15,7 @@ const n3 = new Net.Network(3,4);
 console.log(n3);*/
 
 NetVis.diGraph("digraph", n);
+
+console.log(
+  n.forward([1.0,1.0])
+);
