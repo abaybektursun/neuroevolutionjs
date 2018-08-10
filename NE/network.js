@@ -13,10 +13,10 @@ export class Node{
     var id = parseInt(inpId);
     // Just to initialize the json
     net.edges[id] = {};
+    this.net = net;
     this.id = id;
     this.type = type;
     this.dependencies = [];
-    this.value = undefined;
 
     net.nodes[id] = this;
     if(type === 'in' || type === 'bias'){
@@ -27,8 +27,17 @@ export class Node{
     }
 
     if(type === 'bias'){
-      this.value  = 1.0;
+      net.current_vals[id] = 1.0;
     }
+  }
+  value(){
+    return this.net.current_vals[this.id];
+  }
+  valueSet(val){
+    this.net.current_vals[this.id] = val;
+  }
+  valuePrev(){
+    return this.net.prev_vals[this.id];
   }
 }
 
@@ -50,6 +59,8 @@ export class Network{
     this.inputNodes = [];
     this.outputNodes = [];
     this.travelPath = [];
+    this.current_vals = {};
+    this.prev_vals = {};
 
     // Create input nodes
     for (var i = 0; i < in_size; i++){
@@ -70,7 +81,7 @@ export class Network{
         var outNode = this.outputNodes[anOut];
         var newEdge = new Edge(
           inNode, outNode,
-          tf.randomUniform([1],-1,1).dataSync()[0],
+          tf.randomUniform([1,1],-1.0,1.0,'float32').dataSync()[0],
           innovation(inNode, outNode)
         );
         this.edges[this.inputNodes[anIn].id][this.outputNodes[anOut].id] = newEdge;
@@ -82,13 +93,12 @@ export class Network{
     return Object.keys(this.nodes).length
   }
 
-  // !TODO Manually check if the values are correct!
   forward(data){
     if(data.length != this.in_size){throw "Dimensions of the data and input of the network do not match"}
 
     // Populate input nodes
     for(var i in data){
-      this.inputNodes[i].value = data[i];
+      this.inputNodes[i].valueSet(data[i]);
     }
 
     var result = [];
@@ -96,30 +106,51 @@ export class Network{
       var outNode = this.outputNodes[i];
       result.push(this.activate(outNode));
     }
+
+    // Copy current to prev and clear the current
+    this.prev_vals = Object.assign({}, this.current_vals);
+    this.current_vals = {};
+
     return result;
   }
 
-  // !TODO check for cycles
+  // Recursively traverses the network
   activate(node){
     this.travelPath.push(node);
     var accumulate = 0.0;
 
     for(var i in node.dependencies){
       var a_node = node.dependencies[i];
-      if(a_node.value === undefined){
-        a_node.value = activate(a_node);
+      var active_val;
+      if(a_node.value() === undefined){
+        // Detects cycles
+        if(travelPath.includes(a_node)){
+          active_val = a_node.valuePrev();
+          // !DEBUG
+          console.log('Cycle Detected!');
+        }
+        else{
+          a_node.valueSet(activate(a_node));
+          active_val = a_node.value();
+        }
+        // !DEBUG
+        console.log('Activation value for ' + a_node.id + ': ' + active_val);
+      }
+      else{
+        active_val = a_node.value();
       }
       // Affine transform
-      console.log(this);
-      accumulate += a_node.value * this.edges[a_node.id][node.id].weight;
+      //console.log(this);
+      accumulate += active_val * this.edges[a_node.id][node.id].weight;
     }
 
     this.travelPath.pop();
     return accumulate
   }
 
+  // Extract nodes and links as json
   tojson(){
-    var graph = {"nodes":[], "links":[]}
+    var graph = {"nodes":[], "links":[]};
     for(var n in this.nodes){
       graph.nodes.push({
         "name": this.nodes[n].type,

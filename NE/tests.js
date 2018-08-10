@@ -17,5 +17,5 @@ console.log(n3);*/
 NetVis.diGraph("digraph", n);
 
 console.log(
-  n.forward([1.0,1.0])
+  n.forward([0.315,-0.6642])
 );
