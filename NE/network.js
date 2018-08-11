@@ -1,13 +1,6 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-//!TODO Make sure innovations are unquie
-var _innovationNumber = 0;
-function innovation(inNode, outNode){
-  _innovationNumber++;
-  return _innovationNumber;
-}
-
 export class Node{
   constructor(inpId, type, net){
     var id = parseInt(inpId);
@@ -19,16 +12,20 @@ export class Node{
     this.dependencies = [];
 
     net.nodes[id] = this;
-    if(type === 'in' || type === 'bias'){
-      net.inputNodes.push(this);
+    if (type === 'in' || type === 'bias' || type === 'out'){
+
+      if(type === 'in' || type === 'bias'){
+        net.inputNodes.push(this);
+      }
+      else if (type === 'out') {
+        net.outputNodes.push(this);
+      }
+
     }
-    else if (type === 'out') {
-      net.outputNodes.push(this);
+    else{
+      net.hiddenNodes.push(this);
     }
 
-    if(type === 'bias'){
-      net.current_vals[id] = 1.0;
-    }
   }
   value(){
     return this.net.current_vals[this.id];
@@ -39,15 +36,21 @@ export class Node{
   valuePrev(){
     return this.net.prev_vals[this.id];
   }
+
+
 }
 
 export class Edge{
-  constructor(input, output, weight, innovation_id){
+  constructor(input, output, weight, innovation_id, net){
+    if (output.type == 'bias' || output.type == 'in'){ throw "Edge cannot point to input!"; }
+    if (input.type == 'out'){ throw "Edge cannot originate from output!"; }
+
     this.weight = weight;
     this.iid = innovation_id;
     this.in = input;
     this.out = output;
     output.dependencies.push(input);
+    net.edges[input.id][output.id] = this;
   }
 }
 
@@ -58,9 +61,15 @@ export class Network{
     this.edges = {};
     this.inputNodes = [];
     this.outputNodes = [];
+    this.hiddenNodes = [];
     this.travelPath = [];
     this.current_vals = {};
     this.prev_vals = {};
+
+    // !TODO Make sure innovations are unquie
+    // !TODO refresh every generation
+    this._innovationNumber = 0;
+
 
     // Create input nodes
     for (var i = 0; i < in_size; i++){
@@ -82,9 +91,8 @@ export class Network{
         var newEdge = new Edge(
           inNode, outNode,
           tf.randomUniform([1,1],-1.0,1.0,'float32').dataSync()[0],
-          innovation(inNode, outNode)
+          this.innovation(inNode, outNode), this
         );
-        this.edges[this.inputNodes[anIn].id][this.outputNodes[anOut].id] = newEdge;
       }
     }
   }
@@ -100,6 +108,8 @@ export class Network{
     for(var i in data){
       this.inputNodes[i].valueSet(data[i]);
     }
+    // Set bias to 1 (last elemnt of inputNodes is always bias)
+    this.inputNodes[this.inputNodes.length-1].valueSet(1.0);
 
     var result = [];
     for(var i in this.outputNodes){
@@ -124,17 +134,17 @@ export class Network{
       var active_val;
       if(a_node.value() === undefined){
         // Detects cycles
-        if(travelPath.includes(a_node)){
+        if(this.travelPath.includes(a_node)){
           active_val = a_node.valuePrev();
           // !DEBUG
           console.log('Cycle Detected!');
         }
         else{
-          a_node.valueSet(activate(a_node));
+          a_node.valueSet(this.activate(a_node));
           active_val = a_node.value();
         }
         // !DEBUG
-        console.log('Activation value for ' + a_node.id + ': ' + active_val);
+        //console.log('Activation value for ' + a_node.id + ': ' + active_val);
       }
       else{
         active_val = a_node.value();
@@ -146,6 +156,49 @@ export class Network{
 
     this.travelPath.pop();
     return accumulate
+  }
+
+  removeEdge(from, to){
+    // delete the old edge
+    delete this.edges[from.id][to.id];
+    var depIdx = to.dependencies.indexOf(from);
+    delete to.dependencies[depIdx];
+  }
+
+  // (From, to) are Nodes
+  insertNode(from, to, type){
+    var weight;
+    if(this.edges[from.id][to.id] !== undefined){
+      weight = this.edges[from.id][to.id].weight;
+      this.removeEdge(from, to);
+    }
+
+    var newNode = new Node(this.numNodes(), type, this);
+
+    var newEdgeTo = new Edge(
+      from, newNode, 1.0,
+      this.innovation(from, newNode), this
+    );
+    var newEdgeFrom = new Edge(
+      newNode, to, weight,
+      this.innovation(newNode, to), this
+    );
+  }
+  // (From, to) are Nodes
+  insertEdge(from, to){
+    if(this.edges[from.id][to.id] !== undefined){
+      throw "Edge going from " + from + " to " + to + " already exists"
+    }
+    var newEdge = new Edge(
+      from, to,
+      tf.randomUniform([1,1],-1.0,1.0,'float32').dataSync()[0],
+      this.innovation(from, to), this
+    );
+
+  }
+  innovation(inNode, outNode){
+    this._innovationNumber++;
+    return this._innovationNumber;
   }
 
   // Extract nodes and links as json
