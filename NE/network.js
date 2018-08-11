@@ -20,7 +20,6 @@ export class Node{
       else if (type === 'out') {
         net.outputNodes.push(this);
       }
-
     }
     else{
       net.hiddenNodes.push(this);
@@ -36,8 +35,6 @@ export class Node{
   valuePrev(){
     return this.net.prev_vals[this.id];
   }
-
-
 }
 
 export class Edge{
@@ -155,7 +152,7 @@ export class Network{
     }
 
     this.travelPath.pop();
-    return accumulate
+    return activation(node.type)(accumulate)
   }
 
   removeEdge(from, to){
@@ -224,13 +221,21 @@ export class Network{
   }
 }
 
-function activation(type){
+export function activation(type){
   var activ;
 
   switch(type) {
-    case "out":
-      activ = 0;
+    case "relu":
+      activ = (x) => Math.max(0, x);
       break;
+    case "sigmoid":
+      activ = (x) => 1.0/(1 + Math.exp(-x));
+      break;
+    case "tanh":
+      activ = (x) => Math.tanh(x);
+      break;
+    default:
+      activ = (x) => x;
   }
 
   return activ;
