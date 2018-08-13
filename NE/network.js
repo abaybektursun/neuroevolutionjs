@@ -1,6 +1,8 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+export var activationTypes = ['tanh', 'relu', 'sigmoid'];
+
 export var globalIDs = {
   edges: {},
   nodes: {},
@@ -203,7 +205,6 @@ export class Network{
     }
 
     var newNode = new Node(nodeID(from, to), type, this);
-    console.log(newNode);
 
     var newEdgeTo = new Edge(
       from, newNode, 1.0,
