@@ -1,4 +1,5 @@
 import * as Net from "./network"
+import * as utils from "./utils"
 import * as NetVis from "./visual"
 import * as optim from "./optim"
 import * as tf from '@tensorflow/tfjs';
@@ -13,15 +14,15 @@ function XOR(i1, i2){
 
 // Init network
 const n = new Net.Network(2,2);
-console.log(n);
+//console.log(n);
 
 // Visualize the network
 NetVis.diGraph("digraphDiv", n);
 
 // Test Forward
-console.log(
-  n.forward([0.315,-0.6642])
-);
+//console.log(
+//  n.forward([0.315,-0.6642])
+//);
 
 function testInsertNode(from, to, type){
   var n1 = n.nodes[from];
@@ -30,7 +31,7 @@ function testInsertNode(from, to, type){
   console.log('Inserted node from ' + from + ' to ' + to);
   NetVis.diGraph("digraphDiv", n);
   console.log(n.forward([0.315,-0.6642]));
-  optim.cleanup();
+  optim.cleanupStep();
 }
 function testInsertEdge(from, to){
   var n1 = n.nodes[from];
@@ -41,7 +42,7 @@ function testInsertEdge(from, to){
   console.log(
     n.forward([0.315,-0.6642])
   );
-  optim.cleanup();
+  optim.cleanupStep();
 }
 
 function testTO(){
@@ -68,11 +69,11 @@ function testTO(){
 }
 
 
-setTimeout(function(){testInsertNode(1,2, 'relu')}, 500);
-setTimeout(function(){testInsertNode(5,2, 'tanh')}, 1000);
-setTimeout(function(){testInsertEdge(5,3)}, 1500);
-setTimeout(function(){testInsertEdge(6,5)}, 2000);
-setTimeout(testTO, 2510);
+setTimeout(function(){testInsertNode(1,2, 'relu')}, 100);
+setTimeout(function(){testInsertNode(5,2, 'tanh')}, 300);
+setTimeout(function(){testInsertEdge(5,3)}, 500);
+setTimeout(function(){testInsertEdge(6,5)}, 700);
+setTimeout(testTO, 910);
 //-----------------------------------------------------------------
 // XOR ------------------------------------------------------------
 function testXOR(){
@@ -84,7 +85,20 @@ function testXOR(){
   var neat = new optim.NEAT(2,1);
 
   // Create a new network
-  NetVis.diGraph("digraphDiv", neat.bestNets[0]);
+  var sampleUnit = utils.randElem(optim.mutated);
+  NetVis.diGraph("digraphDiv", sampleUnit);
+
+  // DEBUG:
+  var mutNodeIds = {};
+  for (var i in optim.mutated){
+    for (var e in optim.mutated[i].nodes){
+      if (optim.mutated[i].nodes[e].id in mutNodeIds){
+        mutNodeIds[optim.mutated[i].nodes[e].id]++;
+      }else{mutNodeIds[optim.mutated[i].nodes[e].id] = 0;}
+    }
+  }
+  console.log("Unique Node IDs", mutNodeIds);
+
 
   var trainX = [],
       trainY = [],
@@ -105,37 +119,61 @@ function testXOR(){
     y = XOR(x1, x2);
     testX.push([x1, x2]); testY.push(y);
   }
-  /*var testPreds = [];
-  for(var i=0;i<testSize;i++){
-    testPreds.push(neat.bestNets[0].forward(testX[i])[0]);
-  }*/
 
-  function singleRun(n){
+  function singleRunTest(n){
+    var reward = 0.0;
+    for(var i in testX){
+      reward += 1.0 - Math.abs(n.forward(testX[i])[0] - testY[i])
+    }
+    return reward;
+  }
+  function singleRunTrain(n){
     var reward = 0.0;
     for(var i in trainX){
       reward += 1.0 - Math.abs(n.forward(trainX[i])[0] - trainY[i])
     }
     return reward;
   }
+  // Chart rewards
+  var chart = c3.generate({
+    bindto: '#xorTest',
+    data: {
+      columns: [
+          ['Test Rewards']
+      ]
+    }
+  });
 
+
+  // optimize ---------------------------------------------------------
+  var rewards = ['Test Rewards'];
+  var best = 0.0;
   for(var gen=0; gen<generations; gen++){
+    console.log('\t Generation', gen);
     //Optimization here
-
-    // sum(abs(testPreds) - abs(testY))
-    var error = tf.tensor1d(testPreds).abs().sub( tf.tensor1d(testY).abs() ).sum().dataSync();
-    console.log(error);
-    //.unshift
-
-    var chart = c3.generate({
-      bindto: '#xorTest',
-      data: {
-        columns: [
-          ['acc', 30, 200, 100, 400, 150, 250],
-        ]
+    for(var species in neat.units){
+      for(var unitId in neat.units[species]){
+        var aNet = neat.units[species][unitId];
+        console.log(aNet);
+        var aReward = singleRunTrain(aNet);
+        if (aReward > best){
+          neat.bestNet = aNet;
+          best = aReward;
+        }
       }
+    }
+
+
+    rewards.push(singleRunTest(neat.bestNet));
+
+    chart.load({
+        columns: [
+            rewards
+        ]
     });
   }
+  //---------------------------------------------------------------------
 
 
 }
-setTimeout(testXOR, 3010);
+setTimeout(testXOR, 1010);

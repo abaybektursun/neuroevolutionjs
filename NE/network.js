@@ -1,4 +1,4 @@
-
+import * as utils from "./utils"
 import * as tf from '@tensorflow/tfjs';
 
 export var activationTypes = ['tanh', 'relu', 'sigmoid'];
@@ -125,7 +125,9 @@ export class Network{
     }
 
     // Inform globalIDs
-    globalIDs._nodeNumber = this.numNodes()-1;
+    if(globalIDs._nodeNumber === 0){
+      globalIDs._nodeNumber = this.numNodes()-1;
+    }
   }
 
   numNodes(){
@@ -143,6 +145,7 @@ export class Network{
     this.inputNodes[this.inputNodes.length-1].valueSet(1.0);
 
     var result = [];
+    console.log(this);
     for(var i in this.outputNodes){
       var outNode = this.outputNodes[i];
       result.push(this.activate(outNode));
@@ -182,6 +185,9 @@ export class Network{
       }
       // Affine transform
       //console.log(this);
+      console.log('from ', a_node.id, '-> to ', node.id);
+      console.log(this.edges);
+      console.log(this.nodes);
       accumulate += active_val * this.edges[a_node.id][node.id].weight;
     }
 
@@ -225,6 +231,72 @@ export class Network{
       tf.randomUniform([1,1],-1.0,1.0,'float32').dataSync()[0],
       edgeID(from, to), this
     );
+  }
+
+  esSpawn(stdDev, numUnits){
+    var spawned = [];
+    for(var i=0; i<numUnits; i++){
+      var aClone = this.clone();
+
+      // !important Mutate edge values
+      for (var f in this.edges){
+        for(var t in aClone.edges[f]){
+          aClone.edges[f][t].weight = tf.randomNormal(
+            [1,1], this.edges[f][t].weight, stdDev
+          ).dataSync()[0];
+        }
+      }
+
+      spawned.push(aClone);
+    }
+    return spawned;
+  }
+  // Have to copy create object clone manually. Why JS? Why?!
+  clone(){
+    function copyNodesByID(nodesPool, source, target){
+      for(var i in source){
+        target[i] = nodesPool[source[i].id];
+      }
+    }
+    //var copy = Object.assign({}, this);
+    var copy = utils.copyObj(this);
+
+    copy.nodes = Object.assign({}, this.nodes);
+    for(var n in this.nodes){
+      copy.nodes[n] =  utils.copyObj(this.nodes[n]);
+      copy.nodes[n].net = copy;
+    }
+
+    for(var n in copy.nodes){
+      copyNodesByID(
+        copy.nodes,
+        copy.nodes[n].dependencies,
+        copy.nodes[n].dependencies
+      );
+    }
+
+    copy.edges = Object.assign({}, this.edges);
+    for(var from in this.edges){
+      copy.edges[from] = Object.assign({}, this.edges[from]);
+      for(var to in this.edges[from]){
+        copy.edges[from][to] = utils.copyObj(this.edges[from][to]);
+        copy.edges[from][to].in = copy.nodes[copy.edges[from][to].in.id];
+        copy.edges[from][to].out = copy.nodes[copy.edges[from][to].out.id];
+      }
+    }
+
+    copy.inputNodes = this.inputNodes.slice();
+    copyNodesByID(copy.nodes, this.inputNodes, copy.inputNodes);
+    copy.outputNodes = this.outputNodes.slice();
+    copyNodesByID(copy.nodes, this.outputNodes, copy.outputNodes);
+    copy.hiddenNodes = this.hiddenNodes.slice();
+    copyNodesByID(copy.nodes, this.hiddenNodes, copy.hiddenNodes);
+
+    copy.travelPath = [];
+    copy.current_vals = Object.assign({}, this.current_vals);
+    copy.prev_vals = Object.assign({}, this.prev_vals);
+
+    return copy;
   }
 
   // Extract nodes and links as json
