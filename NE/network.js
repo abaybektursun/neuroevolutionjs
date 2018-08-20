@@ -145,7 +145,8 @@ export class Network{
     this.inputNodes[this.inputNodes.length-1].valueSet(1.0);
 
     var result = [];
-    console.log(this);
+    // DEBUG:
+    //console.log(this);
     for(var i in this.outputNodes){
       var outNode = this.outputNodes[i];
       result.push(this.activate(outNode));
@@ -166,6 +167,7 @@ export class Network{
     for(var i in node.dependencies){
       var a_node = node.dependencies[i];
       var active_val;
+      //console.log( node.dependencies);
       if(a_node.value() === undefined){
         // Detects cycles
         if(this.travelPath.includes(a_node)){
@@ -174,6 +176,9 @@ export class Network{
           //console.log('Cycle Detected!');
         }
         else{
+          // DEBUG:
+          //console.log(a_node);
+
           a_node.valueSet(this.activate(a_node));
           active_val = a_node.value();
         }
@@ -186,8 +191,9 @@ export class Network{
       // Affine transform
       //console.log(this);
       console.log('from ', a_node.id, '-> to ', node.id);
-      console.log(this.edges);
-      console.log(this.nodes);
+      //console.log(this.edges);
+      //console.log(this.nodes);
+      //console.log(this.edges[a_node.id]);
       accumulate += active_val * this.edges[a_node.id][node.id].weight;
     }
 
@@ -199,7 +205,7 @@ export class Network{
     // delete the old edge
     delete this.edges[from.id][to.id];
     var depIdx = to.dependencies.indexOf(from);
-    delete to.dependencies[depIdx];
+    to.dependencies.splice(depIdx,1);
   }
 
   // (From, to) are Nodes
@@ -251,6 +257,7 @@ export class Network{
     }
     return spawned;
   }
+
   // Have to copy create object clone manually. Why JS? Why?!
   clone(){
     function copyNodesByID(nodesPool, source, target){
@@ -261,13 +268,16 @@ export class Network{
     //var copy = Object.assign({}, this);
     var copy = utils.copyObj(this);
 
-    copy.nodes = Object.assign({}, this.nodes);
+    copy.nodes = utils.copyObj(this.nodes);
     for(var n in this.nodes){
-      copy.nodes[n] =  utils.copyObj(this.nodes[n]);
+      copy.nodes[n] = utils.copyObj(this.nodes[n]);
       copy.nodes[n].net = copy;
     }
 
+
+
     for(var n in copy.nodes){
+      copy.nodes[n].dependencies = utils.copyObj(this.nodes[n].dependencies);
       copyNodesByID(
         copy.nodes,
         copy.nodes[n].dependencies,
@@ -275,9 +285,9 @@ export class Network{
       );
     }
 
-    copy.edges = Object.assign({}, this.edges);
+    copy.edges =utils.copyObj(this.edges);
     for(var from in this.edges){
-      copy.edges[from] = Object.assign({}, this.edges[from]);
+      copy.edges[from] = utils.copyObj(this.edges[from]);
       for(var to in this.edges[from]){
         copy.edges[from][to] = utils.copyObj(this.edges[from][to]);
         copy.edges[from][to].in = copy.nodes[copy.edges[from][to].in.id];
@@ -293,8 +303,8 @@ export class Network{
     copyNodesByID(copy.nodes, this.hiddenNodes, copy.hiddenNodes);
 
     copy.travelPath = [];
-    copy.current_vals = Object.assign({}, this.current_vals);
-    copy.prev_vals = Object.assign({}, this.prev_vals);
+    copy.current_vals = utils.copyObj(this.current_vals);
+    copy.prev_vals = utils.copyObj(this.prev_vals);
 
     return copy;
   }

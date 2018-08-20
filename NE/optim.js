@@ -39,7 +39,7 @@ export class NEAT{
       var seedNet = new Net.Network(in_size, out_size);
       this.units[s] = seedNet.esSpawn(optimConfigs.esStdDev, optimConfigs.unitsPerSpecies);
     }
-    this.mutateTopology(optimConfigs.mutationRateInital);
+    //this.mutateTopology(optimConfigs.mutationRateInital);
   }
   // mutRate - mutation rate
   mutateTopology(mutRate){
@@ -106,7 +106,9 @@ export class NEAT{
             }
 
             type = utils.randElem(Net.activationTypes);
+            console.log('Before inserting node:',this.units[s][u]);
             this.units[s][u].insertNode(from, to, type);
+            console.log('After inserting node:',this.units[s][u]);
           }
           // New Edge .5 chance
           else{

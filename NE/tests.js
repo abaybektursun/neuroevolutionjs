@@ -83,10 +83,11 @@ function testXOR(){
   var testSize = 50;
 
   var neat = new optim.NEAT(2,1);
+  console.log(neat.units);
 
   // Create a new network
   var sampleUnit = utils.randElem(optim.mutated);
-  NetVis.diGraph("digraphDiv", sampleUnit);
+  //NetVis.diGraph("digraphDiv", sampleUnit);
 
   // DEBUG:
   var mutNodeIds = {};
@@ -145,8 +146,17 @@ function testXOR(){
   });
 
 
+  // Forward test
+  for(var species in neat.units){
+    for(var unitId in neat.units[species]){
+      console.log("Unit#: ",unitId);
+      var aNet = neat.units[species][unitId];
+      NetVis.diGraph("digraphDiv", aNet);
+      aNet.forward([0.5,0.5]);
+    }
+  }
   // optimize ---------------------------------------------------------
-  var rewards = ['Test Rewards'];
+  /*var rewards = ['Test Rewards'];
   var best = 0.0;
   for(var gen=0; gen<generations; gen++){
     console.log('\t Generation', gen);
@@ -171,7 +181,7 @@ function testXOR(){
             rewards
         ]
     });
-  }
+  }*/
   //---------------------------------------------------------------------
 
 
