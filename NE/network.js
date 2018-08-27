@@ -274,8 +274,6 @@ export class Network{
       copy.nodes[n].net = copy;
     }
 
-
-
     for(var n in copy.nodes){
       copy.nodes[n].dependencies = utils.copyObj(this.nodes[n].dependencies);
       copyNodesByID(

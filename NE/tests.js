@@ -151,8 +151,8 @@ function testXOR(){
     for(var unitId in neat.units[species]){
       console.log("Unit#: ",unitId);
       var aNet = neat.units[species][unitId];
-      NetVis.diGraph("digraphDiv", aNet);
-      aNet.forward([0.5,0.5]);
+      //NetVis.diGraph("digraphDiv", aNet);
+      console.log(aNet.forward([0.5,0.5]));
     }
   }
   // optimize ---------------------------------------------------------
