@@ -204,8 +204,15 @@ export class Network{
   removeEdge(from, to){
     // delete the old edge
     delete this.edges[from.id][to.id];
-    var depIdx = to.dependencies.indexOf(from);
+    //var depIdx = to.dependencies.indexOf(from);
+    var depIdx = utils.indexOfNodeByID(to.dependencies, from)
+
     to.dependencies.splice(depIdx,1);
+    delete to.dependencies[depIdx];
+
+    console.log('\t depIdx: ', depIdx);
+    console.log('\t to.dependencies: ', utils.copyObj(to.dependencies));
+    console.log('\t from: ', from);
   }
 
   // (From, to) are Nodes
@@ -215,6 +222,8 @@ export class Network{
       weight = this.edges[from.id][to.id].weight;
       this.removeEdge(from, to);
     }
+
+    console.log('\t after removing and edge: ', this.edges);
 
     var newNode = new Node(nodeID(from, to), type, this);
 

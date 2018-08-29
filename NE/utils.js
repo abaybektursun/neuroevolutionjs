@@ -35,3 +35,11 @@ export function arrMap(arrIn, f){
 export function copyObj(obIn){
   return Object.assign( Object.create( Object.getPrototypeOf(obIn)), obIn);
 }
+
+export function indexOfNodeByID(arrOfNodes, node){
+  for(var i in arrOfNodes){
+    if(arrOfNodes[i].id == node.id){return i}
+  }
+  console.log('Could not find the node in the given arrOfNodes');
+  return -1
+}
