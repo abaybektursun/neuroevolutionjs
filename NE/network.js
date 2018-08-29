@@ -145,8 +145,7 @@ export class Network{
     this.inputNodes[this.inputNodes.length-1].valueSet(1.0);
 
     var result = [];
-    // DEBUG:
-    //console.log(this);
+
     for(var i in this.outputNodes){
       var outNode = this.outputNodes[i];
       result.push(this.activate(outNode));
@@ -167,34 +166,26 @@ export class Network{
     for(var i in node.dependencies){
       var a_node = node.dependencies[i];
       var active_val;
-      //console.log( node.dependencies);
       if(a_node.value() === undefined){
         // Detects cycles
         if(this.travelPath.includes(a_node)){
           active_val = a_node.valuePrev();
-          // !DEBUG
-          //console.log('Cycle Detected!');
         }
         else{
-          // DEBUG:
-          //console.log(a_node);
-
           a_node.valueSet(this.activate(a_node));
           active_val = a_node.value();
         }
-        // !DEBUG
-        //console.log('Activation value for ' + a_node.id + ': ' + active_val);
       }
       else{
         active_val = a_node.value();
       }
       // Affine transform
-      //console.log(this);
-      console.log('from ', a_node.id, '-> to ', node.id);
-      //console.log(this.edges);
-      //console.log(this.nodes);
-      //console.log(this.edges[a_node.id]);
-      accumulate += active_val * this.edges[a_node.id][node.id].weight;
+      try{
+        accumulate += active_val * this.edges[a_node.id][node.id].weight;
+      }
+      catch(err){
+        throw new Error(err);
+      }
     }
 
     this.travelPath.pop();
@@ -208,11 +199,6 @@ export class Network{
     var depIdx = utils.indexOfNodeByID(to.dependencies, from)
 
     to.dependencies.splice(depIdx,1);
-    delete to.dependencies[depIdx];
-
-    console.log('\t depIdx: ', depIdx);
-    console.log('\t to.dependencies: ', utils.copyObj(to.dependencies));
-    console.log('\t from: ', from);
   }
 
   // (From, to) are Nodes
@@ -222,8 +208,6 @@ export class Network{
       weight = this.edges[from.id][to.id].weight;
       this.removeEdge(from, to);
     }
-
-    console.log('\t after removing and edge: ', this.edges);
 
     var newNode = new Node(nodeID(from, to), type, this);
 
@@ -284,7 +268,9 @@ export class Network{
     }
 
     for(var n in copy.nodes){
-      copy.nodes[n].dependencies = utils.copyObj(this.nodes[n].dependencies);
+      // This seems to turn Array object into something else
+      //copy.nodes[n].dependencies = utils.copyObj(this.nodes[n].dependencies);
+      copy.nodes[n].dependencies = this.nodes[n].dependencies.slice()
       copyNodesByID(
         copy.nodes,
         copy.nodes[n].dependencies,

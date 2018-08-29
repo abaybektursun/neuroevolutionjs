@@ -38,7 +38,7 @@ export function copyObj(obIn){
 
 export function indexOfNodeByID(arrOfNodes, node){
   for(var i in arrOfNodes){
-    if(arrOfNodes[i].id == node.id){return i}
+    if(arrOfNodes[i].id == node.id){return Number(i)}
   }
   console.log('Could not find the node in the given arrOfNodes');
   return -1

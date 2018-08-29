@@ -77,13 +77,13 @@ setTimeout(testTO, 910);
 //-----------------------------------------------------------------
 // XOR ------------------------------------------------------------
 function testXOR(){
-  console.log("Starting the real test ---------------------------------------");
-  var generations = 1;
+  console.log("--------------------------------------- Starting the real test ---------------------------------------");
+  var generations = 10;
   var trainSize = 500;
   var testSize = 50;
 
   var neat = new optim.NEAT(2,1);
-  console.log(neat.units);
+  console.log('Species: ', neat.units);
 
   // Create a new network
   var sampleUnit = utils.randElem(optim.mutated);
@@ -145,26 +145,46 @@ function testXOR(){
     }
   });
 
+  // TEMP, Do NOT use this in the future
+  function esStep(best){
+    for(var s=0; s<optim.optimConfigs.num_species; s++){
+      var seedNet = best;
 
-  // Forward test
-  for(var species in neat.units){
-    for(var unitId in neat.units[species]){
-      console.log("Unit#: ",unitId);
-      var aNet = neat.units[species][unitId];
-      //NetVis.diGraph("digraphDiv", aNet);
-      console.log(aNet.forward([0.5,0.5]));
+      var shifted = [];
+        {
+          for(var i=0; i<optim.optimConfigs.unitsPerSpecies; i++){
+            var aClone = seedNet.clone();
+
+            // !important Mutate edge values
+            for (var f in seedNet.edges){
+              for(var t in aClone.edges[f]){
+                aClone.edges[f][t].weight = tf.randomNormal(
+                  [1,1], seedNet.edges[f][t].weight, optim.optimConfigs.esStdDev
+                ).dataSync()[0];
+              }
+            }
+            shifted.push(aClone);
+          }
+        }
+
+      neat.units[s] = shifted
     }
+    neat.mutateTopology(optim.optimConfigs.mutationRate);
   }
-  // optimize ---------------------------------------------------------
-  /*var rewards = ['Test Rewards'];
+
+
+  // Optimize ---------------------------------------------------------
+  var rewards = ['Test Rewards'];
   var best = 0.0;
   for(var gen=0; gen<generations; gen++){
     console.log('\t Generation', gen);
+    if (neat.bestNet !== undefined){
+      esStep(neat.bestNet);
+    }
     //Optimization here
     for(var species in neat.units){
       for(var unitId in neat.units[species]){
         var aNet = neat.units[species][unitId];
-        console.log(aNet);
         var aReward = singleRunTrain(aNet);
         if (aReward > best){
           neat.bestNet = aNet;
@@ -173,15 +193,15 @@ function testXOR(){
       }
     }
 
-
     rewards.push(singleRunTest(neat.bestNet));
+    neat.evolve();
 
     chart.load({
         columns: [
             rewards
         ]
     });
-  }*/
+  }
   //---------------------------------------------------------------------
 
 

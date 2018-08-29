@@ -13,9 +13,9 @@ export function cleanupStep(){
 export var optimConfigs = {
   mutationRate: 0.005,
   mutationRateInital:0.5,
-  esStdDev: 0.01,
-  unitsPerSpecies: 2,
-  num_species: 1,
+  esStdDev: 0.001,
+  unitsPerSpecies: 50,
+  num_species: 4,
   num_preserve: 10
 };
 
@@ -29,7 +29,7 @@ export class NEAT{
     // Array of unit arrays. Each unit array is different species
     this.units = [];
     // Best units for each species
-    this.bestNet;
+    this.bestNet = undefined;
     // best performing units in each species
     this.speciesBest = [];
     this.currentGen = 0;
@@ -51,17 +51,11 @@ export class NEAT{
         availableNodesFrom.push(Number(nodeID));
         availableNodesTo.push(Number(nodeID));
       }
-      //console.log("n object: ", n.constructor.name);
 
-      //console.log(availableNodesFrom, availableNodesTo);
       var inpudIds = utils.arrMap(n.inputNodes, x => x.id);
-      //console.log('inpudIds', inpudIds);
-      //console.log('n.inputNodes', n.inputNodes);
       availableNodesTo = utils.arrDiff(availableNodesTo, inpudIds);
 
       var outIds = utils.arrMap(n.outputNodes, x => x.id)
-      //console.log('outIds',outIds);
-      //console.log('n.outputNodes',n.outputNodes);
       availableNodesFrom = utils.arrDiff(availableNodesFrom, outIds);
 
       var novelEdges = [];
@@ -80,7 +74,6 @@ export class NEAT{
         } else{return []}
       }
 
-      //console.log(availableNodesFrom, availableNodesTo);
       var from = availableNodesFrom[Math.floor(Math.random()*availableNodesFrom.length)],
           to = availableNodesTo[Math.floor(Math.random()*availableNodesTo.length)];
 
@@ -106,19 +99,17 @@ export class NEAT{
             }
 
             type = utils.randElem(Net.activationTypes);
-            console.log('Before inserting node:',utils.copyObj(this.units[s][u].nodes));
             this.units[s][u].insertNode(from, to, type);
-            console.log('After inserting node:',this.units[s][u].nodes);
           }
           // New Edge .5 chance
           else{
-            var from, to, type;
+            /*var from, to, type;
             var rEdge = randEdge(this.units[s][u], true);
             if (rEdge.length === 0){console.log('All possible edges are occupied');}
             else {
               [from, to] = rEdge;
               this.units[s][u].insertEdge(from, to);
-            }
+            }*/
           }
 
           mutated.push(this.units[s][u]);
