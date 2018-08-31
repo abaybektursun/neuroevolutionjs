@@ -9,6 +9,7 @@ function XOR(i1, i2){
   var b1 = Boolean(Math.round(i1));
   var b2 = Boolean(Math.round(i2));
   return b1 ? !b2 : b2;
+
 }
 
 /*
@@ -78,8 +79,8 @@ setTimeout(testTO, 910);*/
 // XOR ------------------------------------------------------------
 function testXOR(){
   console.log("--------------------------------------- Starting the real test ---------------------------------------");
-  var generations = 30;
-  var trainSize = 500;
+  var generations = 100;
+  var trainSize = 30;
   var testSize = 10;
 
   var neat = new optim.NEAT(2,1);
@@ -90,7 +91,7 @@ function testXOR(){
   //NetVis.diGraph("digraphDiv", sampleUnit);
 
   // DEBUG:
-  var mutNodeIds = {};
+  /*var mutNodeIds = {};
   for (var i in optim.mutated){
     for (var e in optim.mutated[i].nodes){
       if (optim.mutated[i].nodes[e].id in mutNodeIds){
@@ -98,7 +99,7 @@ function testXOR(){
       }else{mutNodeIds[optim.mutated[i].nodes[e].id] = 0;}
     }
   }
-  console.log("Unique Node IDs", mutNodeIds);
+  console.log("Unique Node IDs", mutNodeIds);*/
 
 
   var trainX = [],
@@ -156,15 +157,15 @@ function testXOR(){
         for (var f in best.edges){
           for(var t in aClone.edges[f]){
             aClone.edges[f][t].weight = tf.randomNormal(
-              [1,1], best.edges[f][t].weight, optim.optimConfigs.esStdDev
-            ).dataSync()[0];
+                                          [1,1], best.edges[f][t].weight, optim.optimConfigs.esStdDev
+                                        ).dataSync()[0];
           }
         }
         shifted.push(aClone);
       }
     }
     neat.units[s] = shifted
-    neat.mutateTopology(optim.optimConfigs.mutationRate);
+    neat.mutateTopology(optim.optimConfigs.mutationRate, s);
   }
 
 
@@ -172,27 +173,25 @@ function testXOR(){
   var rewards = ['Test Rewards'];
   for(var gen=0; gen<generations; gen++){
     console.log('\t Generation', gen);
-    var speciesReward = [];
-    var speciesBestReward = [];
-    speciesReward = [0.0,0.0,0.0,0.0];
-    speciesBestReward = [0.0,0.0,0.0,0.0];
-
     //Optimization here
     for(var species in neat.units){
-      if (neat.speciesBest.length > 0){
-        optim.cleanupStep();
-        esStep(neat.speciesBest[species], species);
-      }
+
+      var reward = 0.0,
+          bestReward = 0.0;
+
+      optim.cleanupStep();
+      esStep(neat.speciesBest[species], species);
 
       for(var unitId in neat.units[species]){
         var aNet = neat.units[species][unitId];
-        { speciesReward[species] = singleRunTest(aNet); }
+        reward = singleRunTest(aNet);
 
-        if (speciesReward[species] > speciesBestReward[species]){
+        if (reward > bestReward){
           neat.speciesBest[species] = aNet;
-          speciesBestReward[species] = speciesReward[species];
+          bestReward = reward;
         }
       }
+
     }
     var bestOfBest = 0.0;
     for(var species in neat.speciesBest){

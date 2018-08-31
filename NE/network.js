@@ -110,7 +110,7 @@ export class Network{
     }
 
     // Create an input bias node
-    //var newNode = new Node(this.numNodes(), 'bias', this);
+    var newNode = new Node(this.numNodes(), 'bias', this);
 
     // Create the connections between input and output
     for(var anIn in this.inputNodes){

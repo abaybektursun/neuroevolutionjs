@@ -11,11 +11,11 @@ export function cleanupStep(){
 }
 
 export var optimConfigs = {
-  mutationRate: 0.01,
+  mutationRate: 0.02,
   mutationRateInital:0.05,
-  esStdDev: 0.9,
-  unitsPerSpecies: 400,
-  num_species: 20,
+  esStdDev: 0.2,
+  unitsPerSpecies: 100,
+  num_species: 10,
   num_preserve: 10
 };
 
@@ -47,7 +47,7 @@ export class NEAT{
     this.mutateTopology(optimConfigs.mutationRateInital);
   }
   // mutRate - mutation rate
-  mutateTopology(mutRate){
+  mutateTopology(mutRate, species){
     // Valid random edge
     function randEdge(n, novel=false){
       var availableNodesFrom = [];
@@ -67,9 +67,14 @@ export class NEAT{
       if(novel){
         for (var af in availableNodesFrom){
           for(var at in availableNodesTo){
-            if (!af in n.edges){novelEdges.push([af, at])}
+            var nIDfrom = availableNodesFrom[af];
+            var nIDto = availableNodesTo[at];
+            if (!(nIDfrom in n.edges)){novelEdges.push([nIDfrom, nIDto])}
             else{
-              if(!at in n.edges[af]){novelEdges.push([n.nodes[af], n.nodes[at]])}
+              try{
+                if(!(nIDto in n.edges[nIDfrom])){novelEdges.push([n.nodes[nIDfrom], n.nodes[nIDto]]);}
+              }
+              catch(err){throw new Error(err);}
             }
           }
         }
@@ -86,7 +91,7 @@ export class NEAT{
       return [n.nodes[from], n.nodes[to]];
     }
 
-    for(var s=0; s<optimConfigs.num_species; s++){
+    function mutateSpecies(self, s){
       for (var u=0; u<optimConfigs.unitsPerSpecies; u++){
         //console.log("mutate?");
         if(Math.random() < mutRate){
@@ -97,31 +102,42 @@ export class NEAT{
             var from, to, type;
             var foundExistingEdge = false;
             while(!foundExistingEdge){
-              [from, to] = randEdge(this.units[s][u]);
-              if (from.id in this.units[s][u].edges){
-                if(to.id in this.units[s][u].edges[from.id]){foundExistingEdge = true;}
+              [from, to] = randEdge(self.units[s][u]);
+              if (from.id in self.units[s][u].edges){
+                if(to.id in self.units[s][u].edges[from.id]){foundExistingEdge = true;}
               }
             }
 
             type = utils.randElem(Net.activationTypes);
-            this.units[s][u].insertNode(from, to, type);
+            self.units[s][u].insertNode(from, to, type);
           }
           // New Edge .5 chance
           else{
-            /*var from, to, type;
-            var rEdge = randEdge(this.units[s][u], true);
+            var from, to, type;
+            var rEdge = randEdge(self.units[s][u], true);
             if (rEdge.length === 0){console.log('All possible edges are occupied');}
             else {
               [from, to] = rEdge;
-              this.units[s][u].insertEdge(from, to);
-            }*/
+              self.units[s][u].insertEdge(from, to);
+            }
           }
 
-          mutated.push(this.units[s][u]);
+          //mutated.push(self.units[s][u]);
         }
       }
     }
+
+    if (species === undefined){
+      for(var s=0; s<optimConfigs.num_species; s++){
+        mutateSpecies(this, s);
+      }
+    }
+    else{
+      mutateSpecies(this, species);
+    }
+
   }
+
   evolve(){
     cleanupStep();
     this.currentGen++;
