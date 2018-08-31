@@ -196,6 +196,9 @@ export class Network{
     // delete the old edge
     delete this.edges[from.id][to.id];
     //var depIdx = to.dependencies.indexOf(from);
+    if(to.dependencies.length == 1){
+      console.log('just one dep.');
+    }
     var depIdx = utils.indexOfNodeByID(to.dependencies, from)
 
     to.dependencies.splice(depIdx,1);

@@ -11,10 +11,10 @@ export function cleanupStep(){
 }
 
 export var optimConfigs = {
-  mutationRate: 0.005,
+  mutationRate: 0.3,
   mutationRateInital:0.5,
-  esStdDev: 0.001,
-  unitsPerSpecies: 50,
+  esStdDev: 0.1,
+  unitsPerSpecies: 2,
   num_species: 4,
   num_preserve: 10
 };
@@ -35,9 +35,14 @@ export class NEAT{
     this.currentGen = 0;
 
     for(var s=0; s<optimConfigs.num_species; s++){
-      this.speciesBest.push([]);
+      // TODO: Uncomment this? Few best in the species need to survive?
+      //this.speciesBest.push([]);
+
       var seedNet = new Net.Network(in_size, out_size);
       this.units[s] = seedNet.esSpawn(optimConfigs.esStdDev, optimConfigs.unitsPerSpecies);
+
+      this.speciesBest.push(this.units[s][0]);
+
     }
     this.mutateTopology(optimConfigs.mutationRateInital);
   }

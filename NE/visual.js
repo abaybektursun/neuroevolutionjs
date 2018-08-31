@@ -2,27 +2,64 @@ import * as d3 from "d3";
 import {selection, select} from "d3-selection";
 import "d3-selection-multi";
 
-var svg, edgepaths, edgelabels,rx, ry, network, svg_id, links, nodes,
-width, height, node, link, simulation;
-var colors = d3.scaleOrdinal(d3.schemeCategory10);
+//svg, edgepaths, edgelabels,rx, shared.ry, links, nodes,
+//width, height, node, link, simulation,
 
 
-function update(network) {
+function update(network, shared) {
+    function dragstarted(d) {
+        if (!d3.event.active) shared.simulation.alphaTarget(0.3).restart()
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+    function ticked() {
+        shared.link
+            .attr("x1", function (d) {return d.source.x;})
+            .attr("y1", function (d) {return d.source.y;})
+            .attr("x2", function (d) {return d.target.x;})
+            .attr("y2", function (d) {return d.target.y;});
+
+        shared.node
+            .attr("transform", function (d) {return "translate(" + d.x + ", " + d.y + ")";});
+
+        shared.edgepaths.attr('d', function (d) {
+            return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
+        });
+
+        shared.edgelabels.attr('transform', function (d) {
+            if (d.target.x < d.source.x) {
+                var bbox = this.getBBox();
+
+                shared.rx = bbox.x + bbox.width / 2;
+                shared.ry = bbox.y + bbox.height / 2;
+                return 'rotate(180 ' + shared.rx + ' ' + shared.ry + ')';
+            }
+            else {
+                return 'rotate(0)';
+            }
+        });
+    }
+
     var graph = network.tojson();
-    links = graph.links;
-    nodes = graph.nodes;
-    link = svg.selectAll(".link")
-        .data(links)
+    shared.links = graph.links;
+    shared.nodes = graph.nodes;
+    shared.link = shared.svg.selectAll(".link")
+        .data(shared.links)
         .enter()
         .append("line")
         .attr("class", "link")
         .attr('marker-end','url(#arrowhead)')
 
-    link.append("title")
+    shared.link.append("title")
         .text(function (d) {return d.type;});
 
-    edgepaths = svg.selectAll(".edgepath")
-        .data(links)
+    shared.edgepaths = shared.svg.selectAll(".edgepath")
+        .data(shared.links)
         .enter()
         .append('path')
         .attrs({
@@ -34,8 +71,8 @@ function update(network) {
         .style("pointer-events", "none");
 
 
-    edgelabels = svg.selectAll(".edgelabel")
-        .data(links)
+    shared.edgelabels = shared.svg.selectAll(".edgelabel")
+        .data(shared.links)
         .enter()
         .append('text')
         .style("pointer-events", "none")
@@ -46,15 +83,15 @@ function update(network) {
             'fill': '#aaa'
         });
 
-    edgelabels.append('textPath')
+    shared.edgelabels.append('textPath')
         .attr('xlink:href', function (d, i) {return '#edgepath' + i})
         .style("text-anchor", "middle")
         .style("pointer-events", "none")
         .attr("startOffset", "50%")
         .text(function (d) {return d.type});
 
-    node = svg.selectAll(".node")
-        .data(nodes)
+    shared.node = shared.svg.selectAll(".node")
+        .data(shared.nodes)
         .enter()
         .append("g")
         .attr("class", "node")
@@ -64,78 +101,43 @@ function update(network) {
                 //.on("end", dragended)
         );
 
-    node.append("circle")
+    shared.node.append("circle")
         .attr("r", 5)
-        .style("fill", function (d, i) {return colors(i);})
+        .style("fill", function (d, i) {return shared.colors(i);})
 
-    node.append("title")
+    shared.node.append("title")
         .text(function (d) {return d.id;});
 
-    node.append("text")
+    shared.node.append("text")
         .attr("dy", -3)
         .text(function (d) {return d.name+":"+d.label;});
 
-    simulation
-        .nodes(nodes)
+    shared.simulation
+        .nodes(shared.nodes)
         .on("tick", ticked);
 
-    simulation.force("link")
-        .links(links);
-}
-
-function ticked() {
-    link
-        .attr("x1", function (d) {return d.source.x;})
-        .attr("y1", function (d) {return d.source.y;})
-        .attr("x2", function (d) {return d.target.x;})
-        .attr("y2", function (d) {return d.target.y;});
-
-    node
-        .attr("transform", function (d) {return "translate(" + d.x + ", " + d.y + ")";});
-
-    edgepaths.attr('d', function (d) {
-        return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
-    });
-
-    edgelabels.attr('transform', function (d) {
-        if (d.target.x < d.source.x) {
-            var bbox = this.getBBox();
-
-            rx = bbox.x + bbox.width / 2;
-            ry = bbox.y + bbox.height / 2;
-            return 'rotate(180 ' + rx + ' ' + ry + ')';
-        }
-        else {
-            return 'rotate(0)';
-        }
-    });
-}
-
-function dragstarted(d) {
-    if (!d3.event.active) simulation.alphaTarget(0.3).restart()
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-function dragged(d) {
-    d.fx = d3.event.x;
-    d.fy = d3.event.y;
+    shared.simulation.force("link")
+        .links(shared.links);
 }
 
 
 export function diGraph(container, network){
-  if(svg !== undefined){ svg.remove(); }
+  var shared = {
+    colors: d3.scaleOrdinal(d3.schemeCategory10)
+  };
 
-  width = d3.select("#"+container).attr("width");
-  height = d3.select("#"+container).attr("height");
+  if(shared.svg !== undefined){ shared.svg.remove(); }
 
-  svg = d3.select("#"+container).append("svg")
-    .style("width", width + 'px')
-    .style("height", height + 'px');
+  shared.width = d3.select("#"+container).attr("width");
+  shared.height = d3.select("#"+container).attr("height");
+
+  shared.svg = d3.select("#"+container).append("svg")
+    .style("width", shared.width + 'px')
+    .style("height", shared.height + 'px');
 
 
 
-  svg.append('defs').append('marker')
+  shared.svg.append('defs').append('marker')
       .attrs({'id':'arrowhead',
           'viewBox':'-0 -5 10 10',
           'refX':13,
@@ -149,10 +151,10 @@ export function diGraph(container, network){
       .attr('fill', '#999')
       .style('stroke','none');
 
-  simulation = d3.forceSimulation()
+  shared.simulation = d3.forceSimulation()
       .force("link", d3.forceLink().id(function (d) {return d.id;}).distance(100).strength(1))
       .force("charge", d3.forceManyBody())
-      .force("center", d3.forceCenter(width / 2, height / 2));
+      .force("center", d3.forceCenter(shared.width / 3, shared.height / 3));
 
-  update(network);
+  update(network, shared);
 }
