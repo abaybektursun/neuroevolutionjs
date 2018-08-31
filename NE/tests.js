@@ -78,8 +78,8 @@ setTimeout(testTO, 910);*/
 // XOR ------------------------------------------------------------
 function testXOR(){
   console.log("--------------------------------------- Starting the real test ---------------------------------------");
-  var generations = 100;
-  var trainSize = 200;
+  var generations = 30;
+  var trainSize = 500;
   var testSize = 10;
 
   var neat = new optim.NEAT(2,1);
@@ -126,7 +126,7 @@ function testXOR(){
     for(var i in testX){
       reward += 1.0 - Math.abs(n.forward(testX[i])[0] - testY[i])
     }
-    return reward;
+    return reward/testX.length;
   }
   function singleRunTrain(n){
     var reward = 0.0;
@@ -180,15 +180,14 @@ function testXOR(){
     //Optimization here
     for(var species in neat.units){
       if (neat.speciesBest.length > 0){
+        optim.cleanupStep();
         esStep(neat.speciesBest[species], species);
       }
 
       for(var unitId in neat.units[species]){
         var aNet = neat.units[species][unitId];
-        try{        speciesReward[species] = singleRunTest(aNet); }
-        catch(err){
-          console.log("Debug here");
-        }
+        { speciesReward[species] = singleRunTest(aNet); }
+
         if (speciesReward[species] > speciesBestReward[species]){
           neat.speciesBest[species] = aNet;
           speciesBestReward[species] = speciesReward[species];
@@ -197,7 +196,11 @@ function testXOR(){
     }
     var bestOfBest = 0.0;
     for(var species in neat.speciesBest){
-      singleRunTest(neat.speciesBest[species])
+      var bestScore = singleRunTest(neat.speciesBest[species]);
+      if (bestScore > bestOfBest) {
+        bestOfBest = bestScore;
+        neat.bestNet = neat.speciesBest[species];
+      }
     }
     rewards.push(singleRunTest(neat.bestNet));
     neat.evolve();

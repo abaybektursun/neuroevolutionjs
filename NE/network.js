@@ -1,5 +1,6 @@
 import * as utils from "./utils"
 import * as tf from '@tensorflow/tfjs';
+import * as NetVis from "./visual"
 
 export var activationTypes = ['tanh', 'relu', 'sigmoid'];
 
@@ -109,7 +110,7 @@ export class Network{
     }
 
     // Create an input bias node
-    var newNode = new Node(this.numNodes(), 'bias', this);
+    //var newNode = new Node(this.numNodes(), 'bias', this);
 
     // Create the connections between input and output
     for(var anIn in this.inputNodes){
@@ -148,7 +149,14 @@ export class Network{
 
     for(var i in this.outputNodes){
       var outNode = this.outputNodes[i];
-      result.push(this.activate(outNode));
+      try{
+        result.push(this.activate(outNode));
+      }
+      catch(err){
+        console.log("This is bad");
+        console.log(this);
+        throw new Error(err)
+      }
     }
 
     // Copy current to prev and clear the current
@@ -184,6 +192,7 @@ export class Network{
         accumulate += active_val * this.edges[a_node.id][node.id].weight;
       }
       catch(err){
+        NetVis.diGraph("digraphDiv0", this);
         throw new Error(err);
       }
     }
@@ -196,9 +205,6 @@ export class Network{
     // delete the old edge
     delete this.edges[from.id][to.id];
     //var depIdx = to.dependencies.indexOf(from);
-    if(to.dependencies.length == 1){
-      console.log('just one dep.');
-    }
     var depIdx = utils.indexOfNodeByID(to.dependencies, from)
 
     to.dependencies.splice(depIdx,1);

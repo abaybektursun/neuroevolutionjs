@@ -11,11 +11,11 @@ export function cleanupStep(){
 }
 
 export var optimConfigs = {
-  mutationRate: 0.3,
-  mutationRateInital:0.5,
-  esStdDev: 0.1,
-  unitsPerSpecies: 2,
-  num_species: 4,
+  mutationRate: 0.01,
+  mutationRateInital:0.05,
+  esStdDev: 0.9,
+  unitsPerSpecies: 400,
+  num_species: 20,
   num_preserve: 10
 };
 
