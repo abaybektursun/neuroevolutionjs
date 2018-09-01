@@ -12,7 +12,7 @@ function XOR(i1, i2){
 
 }
 
-/*
+
 // Init network
 const n = new Net.Network(2,2);
 //console.log(n);
@@ -74,7 +74,7 @@ setTimeout(function(){testInsertNode(1,2, 'relu')}, 100);
 setTimeout(function(){testInsertNode(5,2, 'tanh')}, 300);
 setTimeout(function(){testInsertEdge(5,3)}, 500);
 setTimeout(function(){testInsertEdge(6,5)}, 700);
-setTimeout(testTO, 910);*/
+setTimeout(testTO, 910);
 //-----------------------------------------------------------------
 // XOR ------------------------------------------------------------
 function testXOR(){
