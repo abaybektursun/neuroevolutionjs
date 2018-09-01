@@ -241,6 +241,7 @@ export class Network{
     );
   }
 
+  // Spawns clones with gaussian pertubation in it's weights
   esSpawn(stdDev, numUnits){
     var spawned = [];
     for(var i=0; i<numUnits; i++){

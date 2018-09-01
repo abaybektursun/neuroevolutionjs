@@ -30,6 +30,8 @@ export class NEAT{
     this.units = [];
     // Best units for each species
     this.bestNet = undefined;
+    this.bestScore = 0.0;
+    this.rewardsHistory = undefined;
     // best performing units in each species
     this.speciesBest = [];
     this.currentGen = 0;
@@ -39,12 +41,11 @@ export class NEAT{
       //this.speciesBest.push([]);
 
       var seedNet = new Net.Network(in_size, out_size);
-      this.units[s] = seedNet.esSpawn(optimConfigs.esStdDev, optimConfigs.unitsPerSpecies);
-
+      this.units[s] = seedNet.esSpawn(optimConfigs.esStdDev, 1);
       this.speciesBest.push(this.units[s][0]);
 
     }
-    this.mutateTopology(optimConfigs.mutationRateInital);
+    //this.mutateTopology(optimConfigs.mutationRateInital);
   }
   // mutRate - mutation rate
   mutateTopology(mutRate, species){
@@ -138,8 +139,29 @@ export class NEAT{
 
   }
 
+  // Spawn from the best in species
+  esStep(){
+    // Need to do refresh every generation!
+    this.evolve();
+
+    for(var species in this.speciesBest){
+      this.units[species] = this.speciesBest[species].esSpawn(
+        optimConfigs.esStdDev, optimConfigs.unitsPerSpecies
+      )
+    }
+    this.mutateTopology(optimConfigs.mutationRate);
+  }
+
   evolve(){
     cleanupStep();
     this.currentGen++;
   }
+
+  save(){
+
+  }
+  load(){
+
+  }
+
 }

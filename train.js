@@ -1,3 +1,5 @@
+'use strict';
+
 import * as Net from "./NE/network"
 import * as utils from "./NE/utils"
 import * as NetVis from "./NE/visual"
@@ -6,6 +8,18 @@ import * as tf from '@tensorflow/tfjs';
 import * as c3 from 'c3'
 
 import Metacar from "metacar";
+
+// Chart rewards
+var chart = c3.generate({
+  bindto: '#metCarTrain',
+  data: {
+    columns: [
+        ['Train Rewards']
+    ]
+  }
+});
+
+var CircularJSON = require('circular-json');
 
 function singlePlay(n, env){
   var rewardSum = 0.0;
@@ -38,8 +52,34 @@ function singlePlay(n, env){
   };
 }
 
+function selection(neat, env){
+    for (var species in neat.units){
+      // selection inbetween species
+      var bestReward = 0.0;
+
+      for(var unit in neat.units[species])
+      {
+        // Run a single network
+        var n = neat.units[species][unit];
+        var singlPlayReward = singlePlay(n, env);
+
+        // Check if it beats the best in species
+        if (singlPlayReward.reward > bestReward){
+          neat.speciesBest[species] = neat.units[species][unit];
+          bestReward = singlPlayReward.reward;
+        }
+        // Check if it beats the best globally
+        if (singlPlayReward.reward > neat.bestScore){
+          neat.bestNet = neat.units[species][unit];
+          neat.bestScore = singlPlayReward.reward;
+        }
+      }
+    }
+}
+
 
 export function run(generations){
+  var neatObjsHistory = {};
   // Select a level
   const level = metacar.level.level1;
   // Create the environement
@@ -54,11 +94,29 @@ export function run(generations){
     var lidarSize = env.getState().linear.length;;
     var controlSize = 2;
     var neat = new optim.NEAT(lidarSize, controlSize);
-    console.log(lidarSize, controlSize);
+    neat.rewardsHistory = ['Train Rewards'];
 
     for(var gen = 0; gen<generations; gen++){
-      console.log(singlePlay(neat.units[0][0], env));
+      console.log('Generation ', gen);
+
+      // Spawn and mutation
+      neat.esStep();
+
+      selection(neat, env);
+
+      // Record the highest score
+      neat.rewardsHistory.push(neat.bestScore);
+
+      neatObjsHistory[gen] = CircularJSON.stringify(neat);
     }
+    localStorage.neat = neatObjsHistory;
+
+    // Plot the best score
+    chart.load({
+        columns: [
+            neat.rewardsHistory
+        ]
+    });
 
   });
 
