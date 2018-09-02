@@ -14,8 +14,8 @@ export var optimConfigs = {
   mutationRate: 0.02,
   mutationRateInital:0.05,
   esStdDev: 0.2,
-  unitsPerSpecies: 100,
-  num_species: 10,
+  unitsPerSpecies: 5,
+  num_species: 4,
   num_preserve: 10
 };
 

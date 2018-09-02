@@ -26,7 +26,7 @@ function singlePlay(n, env){
   var timesteps = 0;
 
   env.reset();
-  for (let s=0; s < 1000; s++){
+  for (let s=0; s < 3000; s++){
     timesteps = s;
     // Get the current state of the lidar
     const state = env.getState();
@@ -42,9 +42,11 @@ function singlePlay(n, env){
       break;
     }
 
+    // Log the reward
+    env.render(true);
+
   }
-  // Log the reward
-  //env.render(true);
+
 
   return {
     'reward': rewardSum,
@@ -56,24 +58,24 @@ function selection(neat, env){
     for (var species in neat.units){
       // selection inbetween species
       var bestReward = 0.0;
+      function playSpecies(species){
+        for(var unit in neat.units[species]) {
+          // Run a single network
+          var n = neat.units[species][unit];
+          var singlPlayReward = singlePlay(n, env);
 
-      for(var unit in neat.units[species])
-      {
-        // Run a single network
-        var n = neat.units[species][unit];
-        var singlPlayReward = singlePlay(n, env);
-
-        // Check if it beats the best in species
-        if (singlPlayReward.reward > bestReward){
-          neat.speciesBest[species] = neat.units[species][unit];
-          bestReward = singlPlayReward.reward;
+          // Check if it beats the best in species
+          if (singlPlayReward.reward > bestReward){
+            neat.speciesBest[species] = neat.units[species][unit];
+            bestReward = singlPlayReward.reward;
+          }
+          // Check if it beats the best globally
+          if (singlPlayReward.reward > neat.bestScore){
+            neat.bestNet = neat.units[species][unit];
+            neat.bestScore = singlPlayReward.reward;
+          }
         }
-        // Check if it beats the best globally
-        if (singlPlayReward.reward > neat.bestScore){
-          neat.bestNet = neat.units[species][unit];
-          neat.bestScore = singlPlayReward.reward;
-        }
-      }
+      }playSpecies(species)
     }
 }
 
@@ -108,15 +110,17 @@ export function run(generations){
       neat.rewardsHistory.push(neat.bestScore);
 
       neatObjsHistory[gen] = CircularJSON.stringify(neat);
+
+      // Plot the best score
+      chart.load({
+          columns: [
+              neat.rewardsHistory
+          ]
+      });
     }
     localStorage.neat = neatObjsHistory;
 
-    // Plot the best score
-    chart.load({
-        columns: [
-            neat.rewardsHistory
-        ]
-    });
+
 
   });
 
