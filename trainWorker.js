@@ -36,7 +36,6 @@ function singlePlay(n, env){
 
   }
 
-
   return {
     'reward': rewardSum,
     'timesteps': timesteps
@@ -68,8 +67,8 @@ function selection(neat, env){
     }
 }
 
-
-export function run(generations){
+// Evloution
+onmessage = function(generations){
   var neatObjsHistory = {};
   // Select a level
   const level = metacar.level.level1;
@@ -100,6 +99,12 @@ export function run(generations){
 
       neatObjsHistory[gen] = CircularJSON.stringify(neat);
 
+      // Report back to the main thread
+      postMessage({
+        'generation': gen,
+        'rewardsHistory':neat.rewardsHistory
+      }});
+    }
   });
 
 }

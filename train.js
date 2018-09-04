@@ -17,7 +17,7 @@ var chart = c3.generate({
   }
 });
 
-var myWorker = new Worker('workTest.js');
+var myWorker = new Worker('trainWorker.js');
 
 myWorker.onmessage = function(e) {
   console.log(e.data);
@@ -26,6 +26,6 @@ myWorker.onmessage = function(e) {
 
 
 export function train_one_gen(){
-  myWorker.postMessage(100000000000);
+  myWorker.postMessage(1);
   console.log('Message posted to worker');
 }

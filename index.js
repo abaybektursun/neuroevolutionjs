@@ -11,10 +11,12 @@ var webWorkerSupport = (typeof(Worker) !== "undefined");
 
 
 function main(){
+
   $('#train').on('click',function() {
       $(this).prop("disabled",true);
       Train.train_one_gen();
   });
+  
 }
 
 
