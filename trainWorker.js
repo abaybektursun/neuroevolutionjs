@@ -1,6 +1,15 @@
-'use strict';
+console.log('Train worker started');
 
-import * as Net from "./NE/network"
+onmessage = function(in_e, Metacar) {
+  e = in_e.data;
+  console.log('Message received from main script');
+  var sqrtSum = 0;
+  for(var i=0; i<e; i++){sqrtSum+=Math.sqrt(666)}
+  console.log('Posting message back to main script');
+  postMessage(sqrtSum);
+}
+
+/*import * as Net from "./NE/network"
 import * as utils from "./NE/utils"
 import * as NetVis from "./NE/visual"
 import * as optim from "./NE/optim"
@@ -8,7 +17,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import Metacar from "metacar";
 
-var CircularJSON = require('circular-json');
+//var CircularJSON = require('circular-json');
 
 function singlePlay(n, env){
   var rewardSum = 0.0;
@@ -80,7 +89,6 @@ onmessage = function(generations){
 
   // Load the env
   env.load().then(() => {
-
     var lidarSize = env.getState().linear.length;;
     var controlSize = 2;
     var neat = new optim.NEAT(lidarSize, controlSize);
@@ -97,14 +105,13 @@ onmessage = function(generations){
       // Record the highest score
       neat.rewardsHistory.push(neat.bestScore);
 
-      neatObjsHistory[gen] = CircularJSON.stringify(neat);
+      //neatObjsHistory[gen] = CircularJSON.stringify(neat);
 
       // Report back to the main thread
       postMessage({
         'generation': gen,
         'rewardsHistory':neat.rewardsHistory
-      }});
+      });
     }
   });
-
-}
+}*/

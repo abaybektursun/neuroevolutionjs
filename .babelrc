@@ -1,16 +1,6 @@
 {
   "presets": [
-    [
-      "env",
-      {
-        "esmodules": false,
-        "targets": {
-          "browsers": [
-            "> 3%"
-          ]
-        }
-      }
-    ]
+    "@babel/preset-env"
   ],
   "plugins": [
     "transform-runtime"
