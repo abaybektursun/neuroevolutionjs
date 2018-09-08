@@ -25,20 +25,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "echo \"Error: no watch specified\" && exit 1",
     "build": "webpack --mode production",
-    "serve": "webpack-dev-server --output-public-path=/build/"
+    "serve": "webpack-dev-server --config ./webpack.config.js --mode development --output-public-path=/build/"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/polyfill": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
-    "@babel/preset-react": "^7.0.0",
-    "babel-dev-server": "^0.1.13",
+    "babel-core": "^6.26.3",
     "babel-loader": "^8.0.2",
     "clang-format": "~1.2.2",
-    "gulp-babel": "^8.0.0",
     "webpack": "^4.0.1",
     "webpack-cli": "^2.1.5",
-    "webpack-dev-server": "^3.1.7",
+    "webpack-dev-server": "^3.1.8",
     "ws": "3.3.2"
   },
   "repository": {

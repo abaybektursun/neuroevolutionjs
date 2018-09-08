@@ -8,16 +8,14 @@ module.exports = {
     publicPath: "build/"
   },
   module:{
-    rules: [{
-      test: /\.js?$/,
-      exclude: /node_modules/,
-      loader: 'babel-loader',
-      options: {
-        plugins: ['syntax-dynamic-import'],
-      },
-      query:{
-        presets: ['env']
-      }
-    }]
+    rules: [
+      {
+        test: /\.js?$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+        }
+    }
+  ]
   }
 };

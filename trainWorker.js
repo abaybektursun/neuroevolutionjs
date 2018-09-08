@@ -1,3 +1,5 @@
+importScripts('/NE/network.js');
+
 console.log('Train worker started');
 
 onmessage = function(in_e, Metacar) {
@@ -9,7 +11,9 @@ onmessage = function(in_e, Metacar) {
   postMessage(sqrtSum);
 }
 
-/*import * as Net from "./NE/network"
+
+/*
+import * as Net from "./NE/network"
 import * as utils from "./NE/utils"
 import * as NetVis from "./NE/visual"
 import * as optim from "./NE/optim"
