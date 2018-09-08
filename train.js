@@ -1,11 +1,13 @@
-import * as Net from "./NE/network"
-import * as utils from "./NE/utils"
-import * as NetVis from "./NE/visual"
-import * as optim from "./NE/optim"
+import * as Net from "./NE/network";
+import * as utils from "./NE/utils";
+import * as NetVis from "./NE/visual";
+import * as optim from "./NE/optim";
 
 import * as c3 from 'c3'
 
 import Metacar from "metacar";
+
+
 
 // Chart rewards
 var chart = c3.generate({
@@ -17,7 +19,9 @@ var chart = c3.generate({
   }
 });
 
-var myWorker = new Worker('trainWorker.js');
+//var myWorker = new Worker('trainWorker.js');
+var Worker = require("worker-loader?name=hash.trainWorker.js!./trainWorker");
+var myWorker = new Worker;
 
 myWorker.onmessage = function(e) {
   console.log(e.data);

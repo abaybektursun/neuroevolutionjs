@@ -1,27 +1,12 @@
-importScripts('/NE/network.js');
-
-console.log('Train worker started');
-
-onmessage = function(in_e, Metacar) {
-  e = in_e.data;
-  console.log('Message received from main script');
-  var sqrtSum = 0;
-  for(var i=0; i<e; i++){sqrtSum+=Math.sqrt(666)}
-  console.log('Posting message back to main script');
-  postMessage(sqrtSum);
-}
-
-
-/*
 import * as Net from "./NE/network"
 import * as utils from "./NE/utils"
 import * as NetVis from "./NE/visual"
 import * as optim from "./NE/optim"
 import * as tf from '@tensorflow/tfjs';
+//import Metacar from "metacar";
+var CircularJSON = require('circular-json');
+console.log('Train worker started');
 
-import Metacar from "metacar";
-
-//var CircularJSON = require('circular-json');
 
 function singlePlay(n, env){
   var rewardSum = 0.0;
@@ -45,7 +30,7 @@ function singlePlay(n, env){
     }
 
     // Log the reward
-    env.render(true);
+    //env.render(true);
 
   }
 
@@ -79,6 +64,22 @@ function selection(neat, env){
       }playSpecies(species)
     }
 }
+
+
+onmessage = function(in_e, Metacar) {
+  var e = in_e.data;
+  console.log('Message received from main script');
+  var sqrtSum = 0;
+  for(var i=0; i<e; i++){sqrtSum+=Math.sqrt(666)}
+  console.log('Posting message back to main script');
+  postMessage(sqrtSum);
+}
+
+
+
+
+/*
+
 
 // Evloution
 onmessage = function(generations){
